@@ -1,16 +1,6 @@
 // Threat Intelligence API for Dashboard
 // This module provides the same threat intelligence capabilities to the React dashboard
 
-const API_BASE = '/api/threat-intel'; // Will be proxied through Vite dev server
-
-// For development, we'll use the same logic as the server
-// In production, this would call a backend API endpoint
-
-import severityRules from '../../../knowledge-base/severity-rules.json';
-import playbooks from '../../../knowledge-base/playbooks.json';
-import logPatterns from '../../../knowledge-base/log-patterns.json';
-import mitreMap from '../../../knowledge-base/mitre-map.json';
-
 // Simple in-memory cache for the dashboard
 const cache = new Map();
 const CACHE_TTL = 3600 * 1000; // 1 hour
@@ -118,10 +108,11 @@ async function checkVirusTotalBrowser(iocValue, iocType, apiKey) {
       case 'hash':
         endpoint = `https://www.virustotal.com/api/v3/files/${iocValue}`;
         break;
-      case 'url':
+      case 'url': {
         const urlId = btoa(iocValue).replace(/=/g, '');
         endpoint = `https://www.virustotal.com/api/v3/urls/${urlId}`;
         break;
+      }
       default:
         return { source: 'VirusTotal', available: false, message: 'Unsupported IOC type' };
     }
@@ -336,4 +327,111 @@ export function clearThreatIntelCache() {
   const size = cache.size;
   cache.clear();
   return { cleared: size };
+}
+
+export function clearCache() {
+  const size = cache.size;
+  cache.clear();
+  return { cleared: size };
+}
+
+// ============================================================================
+// NVD (National Vulnerability Database) Integration
+// ============================================================================
+
+export async function checkNVD(cveId) {
+  const cacheKey = `nvd_${cveId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+  
+  try {
+    const headers = {
+      'Accept': 'application/json'
+    };
+    
+    const nvdApiKey = localStorage.getItem('nvd_api_key');
+    if (nvdApiKey && nvdApiKey !== 'your_nvd_api_key_here') {
+      headers['apiKey'] = nvdApiKey;
+    }
+    
+    const response = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=${cveId}`, {
+      headers
+    });
+    
+    if (!response.ok) {
+      throw new Error(`NVD API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.vulnerabilities || data.vulnerabilities.length === 0) {
+      return {
+        source: 'NVD',
+        available: true,
+        found: false,
+        message: `CVE ${cveId} not found in NVD database`
+      };
+    }
+    
+    const vuln = data.vulnerabilities[0].cve;
+    const metrics = vuln.metrics;
+    
+    let cvssScore = null;
+    let cvssVector = null;
+    let severity = 'Unknown';
+    
+    if (metrics.cvssMetricV31 && metrics.cvssMetricV31.length > 0) {
+      cvssScore = metrics.cvssMetricV31[0].cvssData.baseScore;
+      cvssVector = metrics.cvssMetricV31[0].cvssData.vectorString;
+      severity = metrics.cvssMetricV31[0].cvssData.baseSeverity;
+    } else if (metrics.cvssMetricV30 && metrics.cvssMetricV30.length > 0) {
+      cvssScore = metrics.cvssMetricV30[0].cvssData.baseScore;
+      cvssVector = metrics.cvssMetricV30[0].cvssData.vectorString;
+      severity = metrics.cvssMetricV30[0].cvssData.baseSeverity;
+    } else if (metrics.cvssMetricV2 && metrics.cvssMetricV2.length > 0) {
+      cvssScore = metrics.cvssMetricV2[0].cvssData.baseScore;
+      cvssVector = metrics.cvssMetricV2[0].cvssData.vectorString;
+      severity = cvssScore >= 7.0 ? 'HIGH' : cvssScore >= 4.0 ? 'MEDIUM' : 'LOW';
+    }
+    
+    const weaknesses = vuln.weaknesses?.map(w => 
+      w.description.map(d => d.value).join(', ')
+    ).join('; ') || 'Not specified';
+    
+    const references = vuln.references?.slice(0, 5).map(ref => ({
+      url: ref.url,
+      source: ref.source
+    })) || [];
+    
+    const result = {
+      source: 'NVD',
+      available: true,
+      found: true,
+      cveId: vuln.id,
+      description: vuln.descriptions?.find(d => d.lang === 'en')?.value || 'No description',
+      cvssScore,
+      cvssVector,
+      severity,
+      weaknesses,
+      published: vuln.published,
+      lastModified: vuln.lastModified,
+      references,
+      exploitabilityScore: metrics.cvssMetricV31?.[0]?.exploitabilityScore || 
+                           metrics.cvssMetricV30?.[0]?.exploitabilityScore || null,
+      impactScore: metrics.cvssMetricV31?.[0]?.impactScore || 
+                   metrics.cvssMetricV30?.[0]?.impactScore || null
+    };
+    
+    setCache(cacheKey, result);
+    return result;
+    
+  } catch (error) {
+    console.error('NVD API error:', error.message);
+    return {
+      source: 'NVD',
+      available: false,
+      error: error.message,
+      message: 'Get API key at https://nvd.nist.gov/developers/request-an-api-key for higher rate limits'
+    };
+  }
 }

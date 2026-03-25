@@ -3,6 +3,7 @@ import TriagePanel from './components/TriagePanel'
 import LogClassifier from './components/LogClassifier'
 import PlaybookViewer from './components/PlaybookViewer'
 import IOCScanner from './components/IOCScanner'
+import CVEChecker from './components/CVEChecker'
 import IncidentTimeline from './components/IncidentTimeline'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
     { id: 'logs', name: 'Log Classifier', icon: '📋' },
     { id: 'playbooks', name: 'Playbooks', icon: '📖' },
     { id: 'ioc', name: 'IOC Scanner', icon: '🔍' },
+    { id: 'cve', name: 'CVE Checker', icon: '🐛' },
     { id: 'timeline', name: 'Incident Timeline', icon: '⏱️' }
   ]
 
@@ -58,6 +60,7 @@ function App() {
             {activeTab === 'logs' && <LogClassifier />}
             {activeTab === 'playbooks' && <PlaybookViewer />}
             {activeTab === 'ioc' && <IOCScanner />}
+            {activeTab === 'cve' && <CVEChecker />}
             {activeTab === 'timeline' && <IncidentTimeline />}
           </div>
         </main>
