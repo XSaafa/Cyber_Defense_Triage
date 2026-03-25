@@ -1,0 +1,110 @@
+{
+  "ssh_bruteforce": {
+    "pattern": "failed|invalid user|authentication failure",
+    "patternFlags": "i",
+    "keywords": ["ssh", "sshd", "openssh"],
+    "severity": "medium",
+    "type": "Brute Force",
+    "description": "SSH brute force or credential stuffing attempt detected",
+    "action": "Check login velocity. If >20 failures/min from same IP, block at firewall."
+  },
+  "sql_injection": {
+    "pattern": "union\\s+select|exec\\s*\\(|xp_cmdshell|information_schema|sleep\\(\\d+\\)|benchmark\\(",
+    "patternFlags": "i",
+    "keywords": ["sql", "database", "query", "mysql", "postgres", "mssql"],
+    "severity": "high",
+    "type": "SQL Injection",
+    "description": "SQL injection payload detected in log entry",
+    "action": "Check if query succeeded. Isolate application, inspect database access logs."
+  },
+  "xss": {
+    "pattern": "<script|javascript:|onerror=|onload=|alert\\(",
+    "patternFlags": "i",
+    "keywords": ["web", "http", "nginx", "apache", "request"],
+    "severity": "medium",
+    "type": "Cross-Site Scripting (XSS)",
+    "description": "XSS payload attempt detected in HTTP request",
+    "action": "Check WAF rules. Determine if payload was reflected or stored."
+  },
+  "rce": {
+    "pattern": "\\bcurl\\b.*http|wget\\s+http|\\bpowershell\\s+-e\\b|base64\\s+-d|/bin/sh|cmd\\.exe|\\|\\s*bash|\\|\\s*sh",
+    "patternFlags": "i",
+    "keywords": ["exec", "shell", "command", "process"],
+    "severity": "critical",
+    "type": "Remote Code Execution",
+    "description": "Possible RCE payload or post-exploitation command detected",
+    "action": "IMMEDIATE: Isolate the affected system. Capture memory and disk image."
+  },
+  "privesc": {
+    "pattern": "sudo\\s+-i|su\\s+-|runas\\s+/user|net\\s+localgroup\\s+administrators",
+    "patternFlags": "i",
+    "keywords": ["sudo", "privilege", "escalation", "admin"],
+    "severity": "high",
+    "type": "Privilege Escalation",
+    "description": "Privilege escalation attempt or successful elevation detected",
+    "action": "Verify if successful. Reset compromised account. Review sudo/admin group membership."
+  },
+  "exfil": {
+    "pattern": "\\b(mega\\.nz|pastebin\\.com|transfer\\.sh|file\\.io|anonfiles)\\b|curl\\s+.*http.*-T|scp\\s+-",
+    "patternFlags": "i",
+    "keywords": ["upload", "transfer", "outbound", "exfil"],
+    "severity": "critical",
+    "type": "Data Exfiltration",
+    "description": "Data upload to external or suspicious service detected",
+    "action": "Block destination immediately. Review what data was transferred. Check legal requirements."
+  },
+  "persistence": {
+    "pattern": "crontab\\s+-e|/etc/cron|schtasks.*/create|reg\\s+add.*\\\\run|startup|autorun",
+    "patternFlags": "i",
+    "keywords": ["persistence", "scheduled", "startup", "registry"],
+    "severity": "high",
+    "type": "Persistence Mechanism",
+    "description": "Attacker may be establishing persistence on the system",
+    "action": "Investigate the scheduled task or registry entry. Check if it appeared after initial compromise."
+  },
+  "log4shell": {
+    "pattern": "\\$\\{jndi:(ldap|rmi|dns)",
+    "patternFlags": "i",
+    "keywords": ["java", "log4j", "jndi"],
+    "severity": "critical",
+    "type": "Log4Shell (CVE-2021-44228)",
+    "description": "Log4Shell exploitation attempt detected",
+    "action": "Patch Log4j immediately. Check if the JNDI lookup succeeded. Isolate affected Java applications."
+  },
+  "shellshock": {
+    "pattern": "\\(\\)\\s*\\{\\s*:;\\s*\\};",
+    "patternFlags": "i",
+    "keywords": ["bash", "cgi", "http", "shellshock"],
+    "severity": "critical",
+    "type": "Shellshock (CVE-2014-6271)",
+    "description": "Shellshock bash vulnerability exploitation attempt",
+    "action": "Patch bash immediately. Check web server CGI scripts. Review command execution logs."
+  },
+  "path_traversal": {
+    "pattern": "\\.\\./|\\.\\.\\\\|%2e%2e%2f|%2e%2e/|\\.\\.%2f",
+    "patternFlags": "i",
+    "keywords": ["web", "http", "file", "path"],
+    "severity": "high",
+    "type": "Path Traversal",
+    "description": "Directory traversal attempt detected in file path",
+    "action": "Check if sensitive files were accessed. Review application input validation. Enable WAF rules."
+  },
+  "csrf": {
+    "pattern": "csrf|cross-site request|forged request",
+    "patternFlags": "i",
+    "keywords": ["web", "http", "session", "token"],
+    "severity": "medium",
+    "type": "CSRF Attack",
+    "description": "Cross-Site Request Forgery attempt detected",
+    "action": "Verify CSRF token validation. Check if unauthorized action was performed. Review session logs."
+  },
+  "malware_dropper": {
+    "pattern": "certutil.*-decode|bitsadmin.*transfer|regsvr32.*scrobj\\.dll|mshta.*http",
+    "patternFlags": "i",
+    "keywords": ["download", "execute", "malware", "lolbin"],
+    "severity": "critical",
+    "type": "Malware Dropper",
+    "description": "Living-off-the-land binary used to download/execute malware",
+    "action": "IMMEDIATE: Isolate system. Check what was downloaded. Scan for malware. Review process tree."
+  }
+}

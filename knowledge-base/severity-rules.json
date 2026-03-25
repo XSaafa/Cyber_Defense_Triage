@@ -1,0 +1,26 @@
+{
+  "critical": {
+    "label": "CRITICAL",
+    "color": "🔴",
+    "sla": "Respond within 15 minutes",
+    "description": "Active breach, ransomware, data exfiltration, or full system compromise"
+  },
+  "high": {
+    "label": "HIGH",
+    "color": "🟠",
+    "sla": "Respond within 1 hour",
+    "description": "Successful intrusion attempt, privilege escalation, lateral movement detected"
+  },
+  "medium": {
+    "label": "MEDIUM",
+    "color": "🟡",
+    "sla": "Respond within 4 hours",
+    "description": "Suspicious activity, policy violations, failed but repeated attack attempts"
+  },
+  "low": {
+    "label": "LOW",
+    "color": "🟢",
+    "sla": "Respond within 24 hours",
+    "description": "Informational alerts, single failed login, minor policy deviations"
+  }
+}

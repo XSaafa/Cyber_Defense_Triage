@@ -1,0 +1,154 @@
+{
+  "ransomware": {
+    "name": "Ransomware Response",
+    "steps": [
+      "ISOLATE: Immediately disconnect affected systems from network (unplug ethernet, disable WiFi)",
+      "PRESERVE: Do NOT reboot or shut down — capture RAM dump first if possible",
+      "IDENTIFY: Determine ransomware family using file extension or ransom note (Crypto Sheriff, ID Ransomware)",
+      "SCOPE: Check what network shares, backups, and cloud drives are accessible from infected system",
+      "CONTAIN: Block C2 IP/domains at firewall, disable affected AD accounts",
+      "NOTIFY: Alert management, legal, and insurance — check if notification laws apply (GDPR, HIPAA)",
+      "RECOVER: Restore from clean, offline backups after full eradication",
+      "DOCUMENT: Preserve all evidence before cleanup for forensic analysis"
+    ],
+    "iocs_to_look_for": [
+      "Encrypted file extensions (.locked, .enc, .crypted)",
+      "Ransom notes (README.txt, DECRYPT.txt)",
+      "Outbound connections to Tor or unknown IPs",
+      "Shadow copy deletion commands (vssadmin delete)"
+    ]
+  },
+  "phishing": {
+    "name": "Phishing Incident Response",
+    "steps": [
+      "TRIAGE: Determine if link was clicked or attachment opened",
+      "CONTAIN: Reset credentials of affected user immediately",
+      "ANALYZE: Extract email headers, links, and attachments safely (use sandbox)",
+      "SCOPE: Check email gateway for same sender/subject to other employees",
+      "BLOCK: Add sender domain/IP to blocklist, submit URL to threat intel",
+      "INVESTIGATE: Review browser history, DNS queries, and process execution logs",
+      "REMEDIATE: Run AV/EDR full scan, check for persistence mechanisms",
+      "TRAIN: Report to user awareness team for training update"
+    ],
+    "iocs_to_look_for": [
+      "Misspelled domain names (paypa1.com)",
+      "Mismatched reply-to vs from address",
+      "Urgency language in subject",
+      "Macro-enabled Office documents"
+    ]
+  },
+  "bruteforce": {
+    "name": "Brute Force Attack Response",
+    "steps": [
+      "DETECT: Confirm attack via authentication logs (failed logins, login velocity)",
+      "CONTAIN: Temporarily block source IP(s) at firewall/WAF",
+      "ASSESS: Check if any login succeeded — if yes, treat as active compromise",
+      "LOCK: Enforce account lockout policy if not already active",
+      "HUNT: Check for successful logins from same IP range or at unusual hours",
+      "HARDEN: Enable MFA on targeted accounts, increase password complexity",
+      "MONITOR: Set alerts for continued attempts from new IPs (attacker may rotate)",
+      "REPORT: Log attack details for threat intelligence sharing"
+    ],
+    "iocs_to_look_for": [
+      "High volume of Event ID 4625 (failed Windows login)",
+      "SSH login attempts from single IP",
+      "Sequential usernames in login attempts",
+      "Logins from Tor exit nodes or VPN ranges"
+    ]
+  },
+  "dataexfil": {
+    "name": "Data Exfiltration Response",
+    "steps": [
+      "IDENTIFY: Determine what data was accessed — DLP alerts, access logs, SIEM",
+      "CONTAIN: Immediately revoke access tokens, rotate API keys, block destination IPs",
+      "PRESERVE: Capture network flows, proxy logs, and endpoint telemetry",
+      "SCOPE: Identify all files/records accessed, downloaded, or transmitted",
+      "NOTIFY: Assess legal notification requirements (GDPR 72hr window, state breach laws)",
+      "HUNT: Look for persistence mechanisms — exfil often follows a dwell period",
+      "REMEDIATE: Patch the exploited vulnerability or misconfiguration",
+      "REVIEW: Audit access controls, implement DLP policies if absent"
+    ],
+    "iocs_to_look_for": [
+      "Large outbound data transfers at odd hours",
+      "DNS tunneling patterns",
+      "Unusual cloud storage uploads (Mega, Dropbox)",
+      "Compressed archives in temp directories"
+    ]
+  },
+  "lateral": {
+    "name": "Lateral Movement Response",
+    "steps": [
+      "MAP: Build timeline of attacker movement across systems using SIEM",
+      "ISOLATE: Segment affected network zone, block inter-VLAN communication",
+      "RESET: Rotate all credentials on compromised systems and downstream accounts",
+      "HUNT: Check for Pass-the-Hash, Pass-the-Ticket, or Kerberoasting artifacts",
+      "REVIEW: Audit privileged account usage and service account activity",
+      "CONTAIN: Disable compromised accounts, revoke Kerberos tickets (krbtgt reset)",
+      "PATCH: Address the initial access vulnerability that enabled lateral movement",
+      "MONITOR: Deploy honeypots and enhanced logging on high-value targets"
+    ],
+    "iocs_to_look_for": [
+      "Unusual SMB connections between workstations",
+      "PsExec or WMI remote execution",
+      "Abnormal service account logins",
+      "New admin account creation"
+    ]
+  },
+  "ddos": {
+    "name": "DDoS Attack Response",
+    "steps": [
+      "DETECT: Confirm traffic spike via network monitoring and bandwidth graphs",
+      "CONTACT: Notify your ISP/CDN provider for upstream filtering",
+      "ANALYZE: Identify attack vector (SYN flood, UDP amplification, HTTP flood, etc.)",
+      "MITIGATE: Enable rate limiting, deploy anti-DDoS appliances, activate CDN protection",
+      "FILTER: Block attacking IPs at perimeter, implement geo-blocking if applicable",
+      "SCALE: Activate auto-scaling for cloud resources if available",
+      "MONITOR: Track attack duration and intensity, watch for pivot to other attack types",
+      "DOCUMENT: Log attack characteristics for future defense tuning"
+    ],
+    "iocs_to_look_for": [
+      "High UDP/ICMP flood from multiple sources",
+      "SYN flood patterns (half-open connections)",
+      "DNS amplification queries",
+      "HTTP requests with identical user-agents"
+    ]
+  },
+  "insiderthreat": {
+    "name": "Insider Threat Response",
+    "steps": [
+      "ASSESS: Determine if threat is malicious or negligent",
+      "PRESERVE: Immediately capture user activity logs before they're rotated",
+      "CONTAIN: Suspend user account access without alerting the individual",
+      "INVESTIGATE: Review file access, email, USB usage, cloud uploads, print logs",
+      "LEGAL: Involve HR and legal counsel before taking further action",
+      "RECOVER: Identify what data was accessed or exfiltrated",
+      "PREVENT: Implement DLP, privileged access management, user behavior analytics",
+      "REVIEW: Audit access controls and separation of duties policies"
+    ],
+    "iocs_to_look_for": [
+      "Large file downloads outside business hours",
+      "Access to files outside user's normal scope",
+      "USB device usage or cloud storage uploads",
+      "Credential sharing or privilege abuse"
+    ]
+  },
+  "webdefacement": {
+    "name": "Web Defacement Response",
+    "steps": [
+      "ISOLATE: Take affected web server offline or put in maintenance mode",
+      "PRESERVE: Capture full disk image and web server logs before restoration",
+      "IDENTIFY: Determine attack vector (SQL injection, file upload, compromised credentials)",
+      "SCOPE: Check if defacement is only visual or if backdoors were planted",
+      "RESTORE: Revert to known-good backup or redeploy from source control",
+      "PATCH: Fix the vulnerability that allowed the defacement",
+      "SCAN: Run malware scanner and web shell detector on entire web root",
+      "MONITOR: Enable enhanced logging and file integrity monitoring"
+    ],
+    "iocs_to_look_for": [
+      "Modified index.html or homepage files",
+      "New PHP/ASPX web shells in upload directories",
+      "Unauthorized admin accounts in CMS",
+      "Suspicious POST requests in web server logs"
+    ]
+  }
+}

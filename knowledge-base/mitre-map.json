@@ -1,0 +1,42 @@
+{
+  "brute force": {
+    "tactic": "Credential Access",
+    "technique": "T1110",
+    "subtechnique": "T1110.001 - Password Guessing"
+  },
+  "phishing": {
+    "tactic": "Initial Access",
+    "technique": "T1566",
+    "subtechnique": "T1566.001 - Spearphishing Attachment"
+  },
+  "sql injection": {
+    "tactic": "Initial Access",
+    "technique": "T1190",
+    "subtechnique": "Exploit Public-Facing Application"
+  },
+  "privilege escalation": {
+    "tactic": "Privilege Escalation",
+    "technique": "T1078",
+    "subtechnique": "T1078.003 - Local Accounts"
+  },
+  "lateral movement": {
+    "tactic": "Lateral Movement",
+    "technique": "T1021",
+    "subtechnique": "T1021.002 - SMB/Windows Admin Shares"
+  },
+  "data exfiltration": {
+    "tactic": "Exfiltration",
+    "technique": "T1041",
+    "subtechnique": "T1041 - Exfiltration Over C2 Channel"
+  },
+  "persistence": {
+    "tactic": "Persistence",
+    "technique": "T1053",
+    "subtechnique": "T1053.005 - Scheduled Task/Job"
+  },
+  "ransomware": {
+    "tactic": "Impact",
+    "technique": "T1486",
+    "subtechnique": "T1486 - Data Encrypted for Impact"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cyber-triage": {
+      "command": "node",
+      "args": [
+        "C:/Users/SAMEER SINGH/Desktop/WORK/college/server.js"
+      ],
+      "env": {}
+    }
+  }
+}

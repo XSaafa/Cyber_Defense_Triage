@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.idea/
+dashboard/node_modules/
+dashboard/dist/
+.eslintcache
