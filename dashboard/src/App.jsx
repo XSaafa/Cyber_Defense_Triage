@@ -5,11 +5,13 @@ import PlaybookViewer from './components/PlaybookViewer'
 import IOCScanner from './components/IOCScanner'
 import CVEChecker from './components/CVEChecker'
 import IncidentTimeline from './components/IncidentTimeline'
+import AgentPanel from './components/AgentPanel'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('triage')
+  const [activeTab, setActiveTab] = useState('agent')
 
   const tabs = [
+    { id: 'agent', name: 'AI Investigator', icon: '🤖' },
     { id: 'triage', name: 'Triage', icon: '🚨' },
     { id: 'logs', name: 'Log Classifier', icon: '📋' },
     { id: 'playbooks', name: 'Playbooks', icon: '📖' },
@@ -56,6 +58,7 @@ function App() {
 
         <main className="flex-1 overflow-y-auto">
           <div className="p-8">
+            {activeTab === 'agent' && <AgentPanel />}
             {activeTab === 'triage' && <TriagePanel />}
             {activeTab === 'logs' && <LogClassifier />}
             {activeTab === 'playbooks' && <PlaybookViewer />}
