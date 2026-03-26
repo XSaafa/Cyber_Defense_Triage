@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-// Autonomous SOC Investigator — Claude-powered agentic loop
+// Autonomous SOC Investigator — Groq-powered agentic loop
 // Can run standalone:  node agent/investigator.js "alert description here"
 
-import Anthropic from '@anthropic-ai/sdk'
+import Groq from 'groq-sdk'
 import { TOOL_DEFINITIONS, executeTool } from '../lib/triageTools.js'
 
-const client = new Anthropic()
+let client = null
+function getClient() {
+  if (!client) client = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  return client
+}
 
 const SYSTEM_PROMPT = `You are an expert SOC (Security Operations Center) analyst and incident responder.
 You have been given a set of triage tools. Your job is to autonomously investigate security incidents.
@@ -42,10 +46,8 @@ Be thorough. The more tools you call, the better the investigation.`
  */
 export async function* investigate(incidentDescription) {
   const messages = [
-    {
-      role: 'user',
-      content: `Investigate this security incident:\n\n${incidentDescription}`
-    }
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: `Investigate this security incident:\n\n${incidentDescription}` }
   ]
 
   let iterations = 0
@@ -56,62 +58,67 @@ export async function* investigate(incidentDescription) {
 
     let response
     try {
-      response = await client.messages.create({
-        model: 'claude-opus-4-6',
+      response = await getClient().chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
         tools: TOOL_DEFINITIONS,
+        tool_choice: 'auto',
         messages
       })
     } catch (err) {
-      yield { type: 'error', message: `Claude API error: ${err.message}` }
+      yield { type: 'error', message: `Groq API error: ${err.message}` }
       return
     }
 
-    // Yield any text blocks as "thinking"
-    for (const block of response.content) {
-      if (block.type === 'text' && block.text.trim()) {
-        yield { type: 'thinking', text: block.text }
-      }
+    const choice = response.choices[0]
+    const message = choice.message
+
+    // Yield text content as "thinking"
+    if (message.content && message.content.trim()) {
+      yield { type: 'thinking', text: message.content }
     }
 
-    // If Claude is done (no more tool calls) — final report
-    if (response.stop_reason === 'end_turn') {
-      const finalText = response.content
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join('\n')
-      yield { type: 'report', text: finalText }
+    // Done — no more tool calls
+    if (choice.finish_reason === 'stop') {
+      yield { type: 'report', text: message.content }
       return
     }
 
     // Handle tool calls
-    if (response.stop_reason === 'tool_use') {
-      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use')
+    if (choice.finish_reason === 'tool_calls' && message.tool_calls) {
       const toolResults = []
 
-      for (const block of toolUseBlocks) {
-        yield { type: 'tool_call', name: block.name, input: block.input }
+      for (const toolCall of message.tool_calls) {
+        const name = toolCall.function.name
+
+        let input
+        try {
+          input = JSON.parse(toolCall.function.arguments)
+        } catch {
+          input = {}
+        }
+
+        yield { type: 'tool_call', name, input }
 
         let result
         try {
-          result = await executeTool(block.name, block.input)
+          result = await executeTool(name, input)
         } catch (err) {
           result = `Tool execution error: ${err.message}`
         }
 
-        yield { type: 'tool_result', name: block.name, result }
+        yield { type: 'tool_result', name, result }
 
         toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
+          role: 'tool',
+          tool_call_id: toolCall.id,
           content: result
         })
       }
 
-      // Feed results back to Claude
-      messages.push({ role: 'assistant', content: response.content })
-      messages.push({ role: 'user', content: toolResults })
+      // Feed results back to the model
+      messages.push(message)           // assistant message with tool_calls
+      messages.push(...toolResults)    // tool result messages
     }
   }
 
@@ -120,7 +127,7 @@ export async function* investigate(incidentDescription) {
 
 // ─── CLI entrypoint ───────────────────────────────────────────────────────────
 
-if (process.argv[1].endsWith('investigator.js')) {
+if (process.argv[1]?.endsWith('investigator.js')) {
   const incident = process.argv.slice(2).join(' ')
   if (!incident) {
     console.error('Usage: node agent/investigator.js "describe the security incident here"')
