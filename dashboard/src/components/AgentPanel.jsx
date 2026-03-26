@@ -131,8 +131,10 @@ export default function AgentPanel() {
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || 'Server error')
+        const text = await res.text()
+        let message = `Server error (${res.status})`
+        try { message = JSON.parse(text).error || message } catch {}
+        throw new Error(message)
       }
 
       const reader = res.body.getReader()
@@ -159,22 +161,33 @@ export default function AgentPanel() {
           }
 
           if (eventType === 'done' || eventType === 'start') continue
-          if (!dataLine) continue
+          if (!dataLine || !dataLine.trim()) continue
 
+          let event
           try {
-            const event = JSON.parse(dataLine)
-            if (event.type === 'report') {
-              setReport(event.text)
-            } else if (event.type === 'error') {
-              setError(event.message)
-            } else {
-              setSteps(prev => [...prev, event])
-            }
-          } catch { /* ignore parse errors */ }
+            event = JSON.parse(dataLine)
+          } catch {
+            continue // skip malformed SSE frames
+          }
+
+          if (!event || typeof event !== 'object') continue
+
+          if (event.type === 'report') {
+            setReport(event.text)
+          } else if (event.type === 'error') {
+            setError(event.message)
+          } else if (event.type) {
+            setSteps(prev => [...prev, event])
+          }
         }
       }
     } catch (err) {
-      setError(err.message)
+      const msg = err.message || String(err)
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('fetch')) {
+        setError('Cannot reach the agent server. Make sure it is running: npm run agent')
+      } else {
+        setError(msg)
+      }
     } finally {
       setRunning(false)
     }
