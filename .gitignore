@@ -7,3 +7,4 @@ dist/
 dashboard/node_modules/
 dashboard/dist/
 .eslintcache
+.txt
